@@ -1,21 +1,40 @@
 #!/bin/bash
+
+# --- Colors ---
+GREEN='\033[0;32m'
 RED='\033[0;31m'
-NC='\033[0m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
 
-echo -e "${RED}[*] OcyShield Framework - Installing...${NC}"
+echo -e "${BLUE}[*] OcyShield Framework - Installing...${NC}"
 
-# Si la carpeta no existe, la clonamos en /opt
-if [ ! -d "/opt/ocyshield" ]; then
-    echo -e "${RED}[*] Cloning repository to /opt/ocyshield...${NC}"
-    sudo git clone https://github.com/ocytos/OcyShield-Framework.git /opt/ocyshield
+# 1. Check for root privileges
+if [ "$EUID" -ne 0 ]; then
+  echo -e "${RED}[!] Please run as root (use sudo)${NC}"
+  exit
 fi
 
-# Creamos el comando global
-echo -e "#!/bin/bash\ncd /opt/ocyshield && python3 main.py \"\$@\"" | sudo tee /usr/local/bin/ocysh > /dev/null
-sudo chmod +x /usr/local/bin/ocysh
+# 2. Cleanup old installations
+if [ -d "/opt/ocyshield" ]; then
+    echo -e "${BLUE}[*] Removing previous version...${NC}"
+    rm -rf /opt/ocyshield
+fi
 
-# Instalamos dependencias
-echo -e "${RED}[*] Installing dependencies...${NC}"
-sudo pip3 install -r /opt/ocyshield/requirements.txt --quiet
+# 3. Clone repository
+echo -e "${BLUE}[*] Cloning repository to /opt/ocyshield...${NC}"
+git clone https://github.com/ocytos/OcyShield-Framework/main /opt/ocyshield
 
-echo -e "${RED}[+] Installation finished! Type 'ocysh' to start.${NC}"
+# 4. Install dependencies (PEP 668 Bypass for Kali)
+echo -e "${BLUE}[*] Installing dependencies...${NC}"
+if [ -f "/opt/ocyshield/requirements.txt" ]; then
+    pip3 install -r /opt/ocyshield/requirements.txt --break-system-packages --quiet
+else
+    echo -e "${RED}[!] requirements.txt not found. Skipping...${NC}"
+fi
+
+# 5. Create global command
+echo -e "${BLUE}[*] Creating global command 'ocysh'...${NC}"
+echo -e "#!/bin/bash\npython3 /opt/ocyshield/main.py \"\$@\"" > /usr/local/bin/ocysh
+chmod +x /usr/local/bin/ocysh
+
+echo -e "${GREEN}[+] Installation finished! Type 'ocysh' to start.${NC}"
