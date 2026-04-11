@@ -22,17 +22,19 @@ fi
 
 # 3. Clone repository
 echo -e "${BLUE}[*] Cloning repository to /opt/ocyshield...${NC}"
-git clone https://github.com/ocytos/OcyShield-Framework/main /opt/ocyshield
+git clone https://github.com/ocytos/OcyShield-Framework.git /opt/ocyshield
 
 # 4. Install dependencies (PEP 668 Bypass for Kali)
 echo -e "${BLUE}[*] Installing dependencies...${NC}"
 if [ -f "/opt/ocyshield/requirements.txt" ]; then
     pip3 install -r /opt/ocyshield/requirements.txt --break-system-packages --quiet
-else
-    echo -e "${RED}[!] requirements.txt not found. Skipping...${NC}"
 fi
 
-# 5. Create global command
+# 5. Fix permissions (To avoid Error: Permission denied logs)
+echo -e "${BLUE}[*] Setting up permissions...${NC}"
+chmod -R 777 /opt/ocyshield
+
+# 6. Create global command
 echo -e "${BLUE}[*] Creating global command 'ocysh'...${NC}"
 echo -e "#!/bin/bash\npython3 /opt/ocyshield/main.py \"\$@\"" > /usr/local/bin/ocysh
 chmod +x /usr/local/bin/ocysh
