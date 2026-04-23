@@ -4,3 +4,4 @@ output/apks/*
 logs/*.log
 .DS_Store
 .env
+*.keystore
